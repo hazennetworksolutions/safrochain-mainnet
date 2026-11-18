@@ -7,7 +7,7 @@
 
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04+-E95420?style=flat-square&logo=ubuntu&logoColor=white)](https://ubuntu.com)
 [![Safrochain](https://img.shields.io/badge/Safrochain-Mainnet-00C2A8?style=flat-square)](https://safrochain.com)
-[![Version](https://img.shields.io/badge/Node%20Version-v0.2.2-brightgreen?style=flat-square)](https://docs.safrochain.com)
+[![Version](https://img.shields.io/badge/Node%20Version-v0.3.0-brightgreen?style=flat-square)](https://docs.safrochain.com)
 [![Chain ID](https://img.shields.io/badge/Chain%20ID-safrochain--1-blue?style=flat-square)](https://docs.safrochain.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
@@ -19,8 +19,8 @@
 
 > **Author:** HazenNetworkSolutions  
 > **Network:** Safrochain Mainnet (Chain ID: safrochain-1)  
-> **Version:** v0.2.2  
-> **Last Updated:** June 2026
+> **Version:** v0.3.0 (upgraded at block 4,557,100)  
+> **Last Updated:** November 2026
 
 ---
 

@@ -7,7 +7,7 @@
 
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04+-E95420?style=flat-square&logo=ubuntu&logoColor=white)](https://ubuntu.com)
 [![Safrochain](https://img.shields.io/badge/Safrochain-Mainnet-00C2A8?style=flat-square)](https://safrochain.com)
-[![Version](https://img.shields.io/badge/Node%20Version-v0.2.2-brightgreen?style=flat-square)](https://docs.safrochain.com)
+[![Version](https://img.shields.io/badge/Node%20Version-v0.3.0-brightgreen?style=flat-square)](https://docs.safrochain.com)
 [![Chain ID](https://img.shields.io/badge/Chain%20ID-safrochain--1-blue?style=flat-square)](https://docs.safrochain.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
@@ -19,8 +19,8 @@
 
 > **Author:** HazenNetworkSolutions  
 > **Network:** Safrochain Mainnet (Chain ID: safrochain-1)  
-> **Version:** v0.2.2  
-> **Last Updated:** June 2026
+> **Version:** v0.3.0 (upgraded at block 4,557,100)  
+> **Last Updated:** November 2026
 
 ---
 
@@ -45,6 +45,7 @@
 - [Step 15 — Verify Sync](#step-15--verify-sync)
 - [Step 16 — Create a Wallet](#step-16--create-a-wallet)
 - [Step 17 — Register as a Validator](#step-17--register-as-a-validator)
+- [Upgrade to v0.3.0 (Existing Nodes)](#upgrade-to-v030-existing-nodes)
 - [Useful Commands](#useful-commands)
 
 ---
@@ -132,6 +133,10 @@ go version go1.25.8 linux/amd64
 
 ## Step 4 — Build safrochaind from Source
 
+> **Which version do I need?** The chain started on `v0.2.2` and upgraded to `v0.3.0` at block **4,557,100** (governance proposal #2, upgrade name `v0.3.0`).
+> - **Syncing from genesis:** build `v0.2.2` below, and also prepare `v0.3.0` in cosmovisor (Step 5) so the node switches automatically at 4,557,100.
+> - **Statesync / snapshot (after 4,557,100):** use `v0.3.0` directly — see [Upgrade to v0.3.0](#upgrade-to-v030-existing-nodes) for the release binary.
+
 Clone the official repository and build `v0.2.2`:
 
 ```bash
@@ -204,6 +209,21 @@ cosmovisor version
 safrochaind version
 # safrochaind v0.2.2
 ```
+
+Prepare the `v0.3.0` upgrade so cosmovisor can switch at block 4,557,100 (official static release binary):
+
+```bash
+mkdir -p $HOME/.safrochain/cosmovisor/upgrades/v0.3.0/bin
+cd $HOME
+wget -O safrochaind-v0.3.0 https://github.com/Safrochain-Org/safrochain-node/releases/download/v0.3.0/safrochaind-v0.3.0-linux-amd64
+echo "c5b8ee22cf51e702d8c9a0b6291ab00f4cda7cb3fceecaacdbd10fba3a217abd  safrochaind-v0.3.0" | sha256sum -c -
+chmod +x safrochaind-v0.3.0
+mv safrochaind-v0.3.0 $HOME/.safrochain/cosmovisor/upgrades/v0.3.0/bin/safrochaind
+$HOME/.safrochain/cosmovisor/upgrades/v0.3.0/bin/safrochaind version
+# v0.3.0
+```
+
+> **Note:** `v0.2.2` built with `make install` links `libwasmvm` from the Go module cache. Do not run `go clean -modcache` while the node still runs `v0.2.2`, or the binary will fail to start. The `v0.3.0` release binary is static and has no such dependency.
 
 ---
 
@@ -543,6 +563,46 @@ safrochaind query staking validator \
   $(safrochaind keys show wallet --bech val -a --keyring-backend file --home ~/.safrochain) \
   --node https://rpc.safrochain.network:443
 ```
+
+---
+
+## Upgrade to v0.3.0 (Existing Nodes)
+
+Safrochain mainnet upgraded to `v0.3.0` at block **4,557,100** (proposal #2, upgrade name `v0.3.0`). If your node is still on `v0.2.2` and stopped with `UPGRADE "v0.3.0" NEEDED`, place the binary in cosmovisor and restart.
+
+```bash
+# 1. Download and verify the official static release binary
+cd $HOME
+wget -O safrochaind-v0.3.0 https://github.com/Safrochain-Org/safrochain-node/releases/download/v0.3.0/safrochaind-v0.3.0-linux-amd64
+echo "c5b8ee22cf51e702d8c9a0b6291ab00f4cda7cb3fceecaacdbd10fba3a217abd  safrochaind-v0.3.0" | sha256sum -c -
+chmod +x safrochaind-v0.3.0
+
+# 2. Place it in the cosmovisor upgrade directory
+mkdir -p $HOME/.safrochain/cosmovisor/upgrades/v0.3.0/bin
+mv safrochaind-v0.3.0 $HOME/.safrochain/cosmovisor/upgrades/v0.3.0/bin/safrochaind
+$HOME/.safrochain/cosmovisor/upgrades/v0.3.0/bin/safrochaind version
+# v0.3.0
+```
+
+If the node has already halted at the upgrade height and cosmovisor did not switch on its own, switch it manually:
+
+```bash
+sudo systemctl stop safrochaind
+ln -sfn $HOME/.safrochain/cosmovisor/upgrades/v0.3.0 $HOME/.safrochain/cosmovisor/current
+cp $HOME/.safrochain/data/upgrade-info.json $HOME/.safrochain/cosmovisor/upgrades/v0.3.0/ 2>/dev/null || true
+sudo systemctl start safrochaind
+sudo journalctl -u safrochaind -fo cat
+```
+
+Verify:
+
+```bash
+safrochaind version
+# v0.3.0
+safrochaind status 2>&1 | jq '.sync_info | {latest_block_height, catching_up}'
+```
+
+> Upgrade proposals on Safrochain can use short (24h) voting periods. Watch governance (`safrochaind query gov proposals`) and prepare the binary in `cosmovisor/upgrades/<name>/bin` before the upgrade height.
 
 ---
 
